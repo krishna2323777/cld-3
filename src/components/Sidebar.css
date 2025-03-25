@@ -1,0 +1,161 @@
+.app-sidebar {
+    width: 250px;
+    height: calc(100vh - 60px);
+    background-color: #031428;
+    color: white;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    transition: width 0.3s ease;
+    z-index: 900;
+  }
+  
+  .app-sidebar.collapsed {
+    width: 60px;
+  }
+  
+  .sidebar-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .sidebar-nav {
+    padding: 20px 0;
+    overflow-y: auto;
+    height: 100%;
+  }
+  
+  .sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .sidebar-nav li {
+    margin-bottom: 5px;
+  }
+  
+  .sidebar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #ccc;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+  
+  .sidebar-nav a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .sidebar-nav a.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border-left: 3px solid #4a90e2;
+  }
+  
+  .sidebar-nav .icon {
+    font-size: 18px;
+    margin-right: 15px;
+    width: 20px;
+    text-align: center;
+  }
+  
+  .app-sidebar.collapsed .label {
+    display: none;
+  }
+  /* Submenu styling */
+.has-submenu {
+  position: relative;
+}
+
+.has-submenu .menu-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.has-submenu .menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.submenu-arrow {
+  margin-left: auto;
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.submenu {
+  list-style: none;
+  padding-left: 20px;
+  margin: 0;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease-out;
+}
+
+.has-submenu.expanded .submenu {
+  max-height: 200px;
+  transition: max-height 0.5s ease-in;
+}
+
+.submenu li {
+  margin: 0;
+}
+
+.submenu li a {
+  padding: 8px 15px 8px 25px;
+  font-size: 14px;
+}
+
+/* Adjust the sidebar toggle to handle submenu expansion */
+.app-sidebar.collapsed .has-submenu .menu-item:hover + .submenu,
+.app-sidebar.collapsed .submenu:hover {
+  display: none;
+}
+
+/* User Profile Section Styling */
+.profile-section {
+  margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 10px;
+}
+
+.profile-section .menu-item {
+  color: #fff;
+  background-color: rgba(74, 144, 226, 0.2);
+  border-radius: 4px;
+  margin: 0 10px;
+  padding: 12px 10px;
+}
+
+.profile-section .menu-item:hover {
+  background-color: rgba(74, 144, 226, 0.3);
+}
+
+.profile-section .label {
+  font-weight: 500;
+}
+
+.profile-section .submenu li a {
+  border-left: 2px solid rgba(74, 144, 226, 0.5);
+  margin-left: 10px;
+}
+
+.profile-section .submenu li a:hover {
+  background-color: rgba(74, 144, 226, 0.15);
+}
