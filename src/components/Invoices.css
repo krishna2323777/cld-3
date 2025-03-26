@@ -79,6 +79,107 @@
   display: block;
   margin-bottom: 0.5rem;
 }
+/* Add these styles to Invoices.css */
+.invoices-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .invoices-table th {
+    background: #f8fafc;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #4a5568;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .invoices-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #4a5568;
+  }
+  
+  .invoices-table tr:hover {
+    background-color: #f8fafc;
+  }
+  
+  .invoices-table .invoice-number {
+    font-weight: 500;
+    color: #2c5282;
+  }
+  
+  .invoices-table .date-cell {
+    color: #4a5568;
+  }
+  
+  .invoices-table .total-cell {
+    font-weight: 600;
+    color: #2c5282;
+  }
+  
+  .invoices-table .download-button {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: #2c5282;
+    color: white;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+  }
+  
+  .invoices-table .download-button:hover {
+    background: #2b6cb0;
+  }
+  
+  .invoices-table .download-icon {
+    margin-right: 0.5rem;
+  }
+  
+  .invoices-table .serial-number {
+    font-weight: 500;
+    color: #4a5568;
+    text-align: center;
+    width: 60px;
+  }
+  
+  .invoices-table .services-cell {
+    max-width: 300px;
+  }
+  
+  .invoices-table .service-item {
+    padding: 0.25rem 0;
+    color: #4a5568;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  .invoices-table .service-item:last-child {
+    border-bottom: none;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .invoices-table {
+      display: block;
+      overflow-x: auto;
+    }
+    
+    .invoices-table th,
+    .invoices-table td {
+      min-width: 120px;
+    }
+    
+    .invoices-table .services-cell {
+      max-width: 200px;
+    }
+  }
 
 .status-badge {
   display: inline-block;
