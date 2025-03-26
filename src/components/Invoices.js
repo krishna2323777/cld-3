@@ -4,7 +4,6 @@ import './Invoices.css';
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -13,7 +12,6 @@ const Invoices = () => {
 
   const fetchInvoices = async () => {
     try {
-      setLoading(true);
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session) {
@@ -52,8 +50,6 @@ const Invoices = () => {
     } catch (err) {
       console.error('Error fetching invoices:', err);
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -102,15 +98,6 @@ const Invoices = () => {
         return 'Unknown';
     }
   };
-
-  if (loading) {
-    return (
-      <div className="invoices-container loading">
-        <div className="loading-spinner"></div>
-        <p>Loading your invoices...</p>
-      </div>
-    );
-  }
 
   if (error) {
     return (

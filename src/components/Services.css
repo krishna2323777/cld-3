@@ -1,0 +1,180 @@
+.services-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.services-container h1 {
+  color: #031428;
+  margin-bottom: 30px;
+  font-size: 28px;
+}
+
+.services-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.services-tabs {
+  display: flex;
+  gap: 15px;
+}
+
+.tab-btn {
+  padding: 10px 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background-color: white;
+  color: #031428;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  border-color: #031428;
+  background-color: #f8f9fa;
+}
+
+.tab-btn.active {
+  background-color: #031428;
+  color: white;
+  border-color: #031428;
+}
+
+.add-service-btn {
+  padding: 10px 20px;
+  background-color: #031428;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-service-btn:hover {
+  background-color: #042a4f;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.service-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s;
+}
+
+.service-card:hover {
+  transform: translateY(-2px);
+}
+
+.service-icon {
+  font-size: 32px;
+  margin-bottom: 15px;
+}
+
+.service-content h3 {
+  color: #031428;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.service-content p {
+  color: #6c757d;
+  margin-bottom: 15px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.service-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.service-price {
+  color: #031428;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.service-status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.service-status.active {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.service-status.inactive {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.service-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-btn.edit {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.action-btn.edit:hover {
+  background-color: #bbdefb;
+}
+
+.action-btn.delete {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.action-btn.delete:hover {
+  background-color: #ffcdd2;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .services-header {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .services-tabs {
+    flex-wrap: wrap;
+  }
+
+  .tab-btn {
+    flex: 1;
+  }
+
+  .services-grid {
+    grid-template-columns: 1fr;
+  }
+} 

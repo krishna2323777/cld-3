@@ -7,30 +7,47 @@ import './Layout.css';
 
 const Layout = () => {
   const [userEmail, setUserEmail] = useState(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const getUser = async () => {
-      const { data } = await supabase.auth.getSession();
-      
-      // If no session, redirect to login
-      if (!data.session) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        
+        // If no session, redirect to login
+        if (!data.session) {
+          navigate('/login');
+          return;
+        }
+        
+        setUserEmail(data.session.user.email);
+      } catch (error) {
+        console.error('Error fetching user session:', error);
         navigate('/login');
-        return;
+      } finally {
+        setLoading(false);
       }
-      
-      setUserEmail(data.session.user.email);
     };
     
     getUser();
   }, [navigate]);
+
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
       <Header userEmail={userEmail} />
       <Sidebar />
       <main className="app-content">
-        <Outlet />
+        <Outlet context={{ userEmail }} />
       </main>
     </div>
   );

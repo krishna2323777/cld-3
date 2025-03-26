@@ -1,0 +1,160 @@
+.generate-forms {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.generate-forms h1 {
+  color: #031428;
+  margin-bottom: 30px;
+  font-size: 28px;
+}
+
+.form-types {
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.form-types h2 {
+  color: #031428;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.form-type-buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.form-type-btn {
+  padding: 12px 24px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background-color: white;
+  color: #031428;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.form-type-btn:hover {
+  border-color: #031428;
+  background-color: #f8f9fa;
+}
+
+.form-type-btn.active {
+  background-color: #031428;
+  color: white;
+  border-color: #031428;
+}
+
+.form-generator {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 30px;
+}
+
+.form-generator h2 {
+  color: #031428;
+  margin-bottom: 25px;
+  font-size: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #031428;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #031428;
+}
+
+.generate-btn {
+  background-color: #031428;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.generate-btn:hover {
+  background-color: #042a4f;
+}
+
+.generated-form {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.generated-form h2 {
+  color: #031428;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.form-preview {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.form-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: monospace;
+  font-size: 14px;
+  color: #031428;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .generate-forms {
+    padding: 15px;
+  }
+
+  .form-type-buttons {
+    flex-direction: column;
+  }
+
+  .form-type-btn {
+    width: 100%;
+  }
+
+  .form-generator,
+  .generated-form {
+    padding: 20px;
+  }
+} 

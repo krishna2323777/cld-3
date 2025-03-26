@@ -143,7 +143,7 @@ const Dashboard = () => {
             <div className="card-content">
               <h3>Cash Balance</h3>
               <p className="card-value">{formatEuro(financialData.cash_balance)}</p>
-              <p className="card-change positive">+2.3% from last month</p>
+             
             </div>
           </div>
           <div className="financial-card revenue">
@@ -165,7 +165,7 @@ const Dashboard = () => {
             <div className="card-content">
               <h3>Net Burn</h3>
               <p className="card-value">{formatEuro(financialData.net_burn)}</p>
-              <p className="card-change positive">+6.4% from last month</p>
+              
             </div>
           </div>
         </div>
