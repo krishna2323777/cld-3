@@ -4,11 +4,18 @@ import { Link } from 'react-router-dom';
 import './Dashboard.css';
 
 // Initialize Supabase client
+const dummyFinancialData = {
+  cash_balance: 342500.75,
+  revenue: 67450.30,
+  expenses: 48250.80,
+  net_burn: 19199.50
+};
 
 const Dashboard = () => {
   const [financialData, setFinancialData] = useState(null); // Set to null initially
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
+  const [useDummyData, setUseDummyData] = useState(false);
 
   useEffect(() => {
     fetchFinancialData();
@@ -18,7 +25,14 @@ const Dashboard = () => {
   const fetchUserProfile = async () => {
     try {
       const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) return;
+      if (!sessionData.session) {
+        // If no session, use dummy profile data
+        setUserProfile({
+          name: "Demo User",
+          company: "HOCEbranch.AI"
+        });
+        return;
+      }
 
       const userId = sessionData.session.user.id;
       
@@ -46,6 +60,8 @@ const Dashboard = () => {
 
       if (!sessionData.session) {
         console.error('No user logged in');
+        setUseDummyData(true);
+        setFinancialData(dummyFinancialData);
         setLoading(false);
         return;
       }
@@ -62,12 +78,21 @@ const Dashboard = () => {
 
       if (error) {
         console.error('Error fetching financial data:', JSON.stringify(error, null, 2));
-        throw error;
+        setUseDummyData(true);
+        setFinancialData(dummyFinancialData);
+      } else {
+        // If no real data exists, use dummy data
+        if (!data) {
+          setUseDummyData(true);
+          setFinancialData(dummyFinancialData);
+        } else {
+          setFinancialData(data);
+        }
       }
-
-      setFinancialData(data || null); // Set to null if no data exists
     } catch (error) {
       console.error('Error in fetchFinancialData:', JSON.stringify(error, null, 2));
+      setUseDummyData(true);
+      setFinancialData(dummyFinancialData);
     } finally {
       setLoading(false);
     }
@@ -89,11 +114,18 @@ const Dashboard = () => {
     <div className="dashboard-container">
       <h1>Financial Dashboard</h1>
 
+      {/* Dummy data notification */}
+      {useDummyData && (
+        <div className="dummy-data-notice">
+
+        </div>
+      )}
+
       {/* Profile Status Section */}
       <div className="profile-status">
         {userProfile ? (
           <div className="profile-summary">
-            <h3>Welcome, {userProfile.name} from HOCEbranch.AI</h3>
+            <h3>Welcome, {userProfile.name} from {userProfile.company || "HOCEbranch.AI"}</h3>
             <Link to="/profile" className="profile-link">View Profile</Link>
           </div>
         ) : (

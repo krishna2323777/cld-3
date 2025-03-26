@@ -8,7 +8,7 @@ import UserProfileForm from './components/UserProfileForm';
 import UserProfileView from './components/UserProfileView';
 import Layout from './components/Layout';
 
-function App() {
+function App() { 
   return (
     <BrowserRouter>
       <Routes>
