@@ -132,71 +132,58 @@ const Invoices = () => {
           <p>No invoices available at the moment.</p>
         </div>
       ) : (
-        <div className="invoices-list">
-          {invoices.map((invoice) => (
-            <div key={invoice.id} className="invoice-card">
-              <div className="invoice-header">
-                <div className="invoice-company">
-                  <h3>{invoice.client_name}</h3>
-                  <div className="invoice-meta">
-                    <p className="invoice-number">Invoice #{invoice.invoice_number}</p>
-                    <p className="invoice-date">Generated on {formatDate(invoice.date)}</p>
-                  </div>
-                </div>
-                <div className="invoice-amount">
-                  <span className="amount-label">Total Amount</span>
-                  <span className="amount-value">{formatCurrency(invoice.total)}</span>
-                  <div className={`status-badge ${getStatusBadgeClass(invoice.status)}`}>
-                    {getStatusText(invoice.status)}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="invoice-details">
-                <div className="invoice-dates">
-                  <div className="date-row">
-                    <span className="date-label">Issue Date:</span>
-                    <span className="date-value">{formatDate(invoice.date)}</span>
-                  </div>
-                  <div className="date-row">
-                    <span className="date-label">Due Date:</span>
-                    <span className={`date-value ${invoice.status === 'overdue' ? 'overdue' : ''}`}>
-                      {formatDate(invoice.due_date)}
-                    </span>
-                  </div>
-                </div>
-
-                {invoice.products && invoice.products.length > 0 && (
-                  <div className="invoice-products">
-                    <h4>Products/Services</h4>
-                    <div className="products-list">
-                      {invoice.products.map((product, index) => (
-                        <div key={index} className="product-item">
-                          <span className="product-name">{product.name}</span>
-                          <span className="product-amount">{formatCurrency(product.amount)}</span>
-                        </div>
-                      ))}
+        <table className="invoices-table">
+          <thead>
+            <tr>
+              <th>S.No</th>
+              <th>Invoice Number</th>
+              <th>Date</th>
+              <th>Due Date</th>
+              <th>Services</th>
+              <th>Total</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices.map((invoice, index) => (
+              <tr key={invoice.id}>
+                <td className="serial-number">{index + 1}</td>
+                <td className="invoice-number">
+                  #{invoice.invoice_number}
+                </td>
+                <td className="date-cell">
+                  {formatDate(invoice.date)}
+                </td>
+                <td className="date-cell">
+                  {formatDate(invoice.due_date)}
+                </td>
+                <td className="services-cell">
+                  {invoice.products && invoice.products.map((product, idx) => (
+                    <div key={idx} className="service-item">
+                      {product.description || product.name}
                     </div>
-                  </div>
-                )}
-              </div>
-
-              {invoice.signed_pdf_url && (
-                <div className="invoice-actions">
-                  <a
-                    href={invoice.signed_pdf_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="download-button"
-                  >
-                    <span className="download-icon">📄</span>
-                    Download Invoice
-                  </a>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+                  ))}
+                </td>
+                <td className="total-cell">
+                  {formatCurrency(invoice.total)}
+                </td>
+                <td>
+                  {invoice.signed_pdf_url && (
+                    <a
+                      href={invoice.signed_pdf_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="download-button"
+                    >
+                      <span className="download-icon">📄</span>
+                      Download
+                    </a>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
