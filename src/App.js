@@ -7,6 +7,7 @@ import FinancialDocuments from './components/FinancialDocuments';
 import UserProfileForm from './components/UserProfileForm';
 import UserProfileView from './components/UserProfileView';
 import Layout from './components/Layout';
+import Invoices from './components/Invoices';
 
 function App() { 
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/documents/kyc" element={<KYCDocuments />} />
           <Route path="/documents/financial" element={<FinancialDocuments />} />
+          <Route path="/invoices" element={<Invoices />} />
           
           {/* User profile routes */}
           <Route path="/profile" element={<UserProfileView />} />
