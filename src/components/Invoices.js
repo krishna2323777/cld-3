@@ -4,6 +4,7 @@ import './Invoices.css';
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -12,6 +13,7 @@ const Invoices = () => {
 
   const fetchInvoices = async () => {
     try {
+      setLoading(true);
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session) {
@@ -28,9 +30,9 @@ const Invoices = () => {
 
       if (error) throw error;
 
-      // Get signed URLs for invoice PDFs and add default status
+      // Get signed URLs for invoice PDFs
       const invoicesWithUrls = await Promise.all(
-        data.map(async (invoice, index) => {
+        data.map(async (invoice) => {
           if (invoice.pdf_url) {
             const { data: urlData } = await supabase
               .storage
@@ -39,14 +41,10 @@ const Invoices = () => {
 
             return {
               ...invoice,
-              signed_pdf_url: urlData?.signedUrl,
-              status: index < 2 ? 'pending' : (invoice.status || 'paid') // Set first two as pending
+              signed_pdf_url: urlData?.signedUrl
             };
           }
-          return {
-            ...invoice,
-            status: index < 2 ? 'pending' : (invoice.status || 'paid') // Set first two as pending
-          };
+          return invoice;
         })
       );
 
@@ -54,6 +52,8 @@ const Invoices = () => {
     } catch (err) {
       console.error('Error fetching invoices:', err);
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,7 +69,7 @@ const Invoices = () => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'EUR'
+      currency: 'USD'
     }).format(amount);
   };
 
@@ -84,7 +84,7 @@ const Invoices = () => {
       case 'draft':
         return 'status-draft';
       default:
-        return 'status-paid'; // Default to paid status
+        return 'status-unknown';
     }
   };
 
@@ -99,9 +99,18 @@ const Invoices = () => {
       case 'draft':
         return 'Draft';
       default:
-        return 'Paid'; // Default to Paid text
+        return 'Unknown';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="invoices-container loading">
+        <div className="loading-spinner"></div>
+        <p>Loading your invoices...</p>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -132,7 +141,7 @@ const Invoices = () => {
               <th>Due Date</th>
               <th>Services</th>
               <th>Total</th>
-              <th>Status</th>
+              <th>Payment Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -141,7 +150,7 @@ const Invoices = () => {
               <tr key={invoice.id}>
                 <td className="serial-number">{index + 1}</td>
                 <td className="invoice-number">
-                  #{invoice.invoice_number}
+                {invoice.invoice_number}
                 </td>
                 <td className="date-cell">
                   {formatDate(invoice.date)}
@@ -159,9 +168,9 @@ const Invoices = () => {
                 <td className="total-cell">
                   {formatCurrency(invoice.total)}
                 </td>
-                <td>
-                  <span className={`status-badge ${getStatusBadgeClass(invoice.status)}`}>
-                    {getStatusText(invoice.status)}
+                <td className="payment-status-cell">
+                  <span className={`payment-status ${invoice.payment_status ? 'paid' : 'unpaid'}`}>
+                    {invoice.payment_status ? 'Paid' : 'Unpaid'}
                   </span>
                 </td>
                 <td>
