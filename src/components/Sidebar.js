@@ -78,8 +78,8 @@ const Sidebar = () => {
           
           <li>
             <NavLink to="/generate-forms" className={({isActive}) => isActive ? 'active' : ''}>
-              <span className="icon">📋</span>
-              {!collapsed && <span className="label">Generate Forms</span>}
+              <span className="icon">🏢</span>
+              {!collapsed && <span className="label">Company profile</span>}
             </NavLink>
           </li>
           <li>
