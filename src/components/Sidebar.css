@@ -8,6 +8,7 @@
     left: 0;
     transition: width 0.3s ease;
     z-index: 900;
+    overflow-y: auto;
   }
   
   .app-sidebar.collapsed {
@@ -27,11 +28,11 @@
     align-items: center;
     cursor: pointer;
     font-size: 14px;
+    z-index: 1000;
   }
   
   .sidebar-nav {
     padding: 20px 0;
-    overflow-y: auto;
     height: 100%;
   }
   
@@ -74,106 +75,126 @@
   .app-sidebar.collapsed .label {
     display: none;
   }
+
+  /* Custom scrollbar styles */
+  .app-sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .app-sidebar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  .app-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+
+  .app-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
   /* Submenu styling */
-.has-submenu {
-  position: relative;
-}
+  .has-submenu {
+    position: relative;
+  }
 
-.has-submenu .menu-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 15px;
-  color: #ccc;
-  text-decoration: none;
-  transition: background-color 0.2s;
-  cursor: pointer;
-}
+  .has-submenu .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    color: #ccc;
+    text-decoration: none;
+    transition: background-color 0.2s;
+    cursor: pointer;
+  }
 
-.has-submenu .menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: white;
-}
+  .has-submenu .menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
 
-.submenu-arrow {
-  margin-left: auto;
-  font-size: 10px;
-  transition: transform 0.2s;
-  color: #ccc;
-}
+  .submenu-arrow {
+    margin-left: auto;
+    font-size: 10px;
+    transition: transform 0.2s;
+    color: #ccc;
+  }
 
-.has-submenu.expanded .submenu-arrow {
-  color: white;
-}
+  .has-submenu.expanded .submenu-arrow {
+    color: white;
+  }
 
-.submenu {
-  list-style: none;
-  padding-left: 20px;
-  margin: 0;
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.3s ease-out;
-}
+  .submenu {
+    list-style: none;
+    padding-left: 20px;
+    margin: 0;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease-out;
+  }
 
-.has-submenu.expanded .submenu {
-  max-height: 200px;
-  transition: max-height 0.5s ease-in;
-}
+  .has-submenu.expanded .submenu {
+    max-height: 500px;
+    transition: max-height 0.5s ease-in;
+  }
 
-.submenu li {
-  margin: 0;
-}
+  .submenu li {
+    margin: 0;
+  }
 
-.submenu li a {
-  padding: 8px 15px 8px 25px;
-  font-size: 14px;
-  color: #ccc;
-}
+  .submenu li a {
+    padding: 8px 15px 8px 25px;
+    font-size: 14px;
+    color: #ccc;
+  }
 
-.submenu li a:hover {
-  color: white;
-  background-color: rgba(255, 255, 255, 0.1);
-}
+  .submenu li a:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
 
-.submenu li a.active {
-  color: white;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-left: 3px solid #4a90e2;
-}
+  .submenu li a.active {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-left: 3px solid #4a90e2;
+  }
 
-/* Adjust the sidebar toggle to handle submenu expansion */
-.app-sidebar.collapsed .has-submenu .menu-item:hover + .submenu,
-.app-sidebar.collapsed .submenu:hover {
-  display: none;
-}
+  /* Adjust the sidebar toggle to handle submenu expansion */
+  .app-sidebar.collapsed .has-submenu .menu-item:hover + .submenu,
+  .app-sidebar.collapsed .submenu:hover {
+    display: none;
+  }
 
-/* User Profile Section Styling */
-.profile-section {
-  margin-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 10px;
-}
+  /* User Profile Section Styling */
+  .profile-section {
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 10px;
+  }
 
-.profile-section .menu-item {
-  color: #fff;
-  background-color: rgba(74, 144, 226, 0.2);
-  border-radius: 4px;
-  margin: 0 10px;
-  padding: 12px 10px;
-}
+  .profile-section .menu-item {
+    color: #fff;
+    background-color: rgba(74, 144, 226, 0.2);
+    border-radius: 4px;
+    margin: 0 10px;
+    padding: 12px 10px;
+  }
 
-.profile-section .menu-item:hover {
-  background-color: rgba(74, 144, 226, 0.3);
-}
+  .profile-section .menu-item:hover {
+    background-color: rgba(74, 144, 226, 0.3);
+  }
 
-.profile-section .label {
-  font-weight: 500;
-}
+  .profile-section .label {
+    font-weight: 500;
+  }
 
-.profile-section .submenu li a {
-  border-left: 2px solid rgba(74, 144, 226, 0.5);
-  margin-left: 10px;
-}
+  .profile-section .submenu li a {
+    border-left: 2px solid rgba(74, 144, 226, 0.5);
+    margin-left: 10px;
+  }
 
-.profile-section .submenu li a:hover {
-  background-color: rgba(74, 144, 226, 0.15);
-}
+  .profile-section .submenu li a:hover {
+    background-color: rgba(74, 144, 226, 0.15);
+  }
