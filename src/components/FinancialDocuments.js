@@ -4,7 +4,7 @@ import './Documents.css';
 
 const FinancialDocuments = () => {
   const [yearFolders, setYearFolders] = useState(['2023', '2024', '2025']);
-  const [selectedYear, setSelectedYear] = useState('2025'); // Default to current year
+  const [selectedYear, setSelectedYear] = useState('2025');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,10 +22,12 @@ const FinancialDocuments = () => {
   const documentCategories = {
     'all': {
       name: 'All Documents',
+      icon: '📁',
       types: []
     },
     'financial_statements': {
       name: 'Financial Statements',
+      icon: '📊',
       types: [
         'Profit & Loss Statement',
         'Balance Sheet',
@@ -35,6 +37,7 @@ const FinancialDocuments = () => {
     },
     'tax_compliance': {
       name: 'Tax & Compliance',
+      icon: '📋',
       types: [
         'Business Tax Return',
         'GST/VAT Return',
@@ -44,6 +47,7 @@ const FinancialDocuments = () => {
     },
     'banking_investment': {
       name: 'Banking & Investment',
+      icon: '🏦',
       types: [
         'Business Bank Statement',
         'Fixed Deposit Certificate',
@@ -53,6 +57,7 @@ const FinancialDocuments = () => {
     },
     'accounts': {
       name: 'Accounts Payable & Receivable',
+      icon: '💰',
       types: [
         'Outstanding Invoice',
         'Payment Record',
@@ -62,6 +67,7 @@ const FinancialDocuments = () => {
     },
     'valuation': {
       name: 'Company Valuation & Shareholding',
+      icon: '📈',
       types: [
         'Shareholder Agreement',
         'Company Valuation Report',
@@ -71,6 +77,7 @@ const FinancialDocuments = () => {
     },
     'debt_loan': {
       name: 'Debt & Loan Documentation',
+      icon: '📝',
       types: [
         'Loan Agreement',
         'Repayment Schedule',
@@ -78,22 +85,9 @@ const FinancialDocuments = () => {
         'Debt Restructuring Agreement'
       ]
     },
-    'general': {
-      name: 'General Financial Documents',
-      types: [
-        'Annual Report',
-        'Quarterly Statement',
-        'Tax Return',
-        'Audit Report',
-        'Bank Statement',
-        'Invoice',
-        'Receipt',
-        'Budget',
-        'Other'
-      ]
-    },
     'other_documents': {
       name: 'Other Documents',
+      icon: '📄',
       types: [
         'Contract',
         'Agreement',
@@ -138,9 +132,9 @@ const FinancialDocuments = () => {
       const documentsWithUrls = await Promise.all(
         data.map(async (doc) => {
           if (doc.file_path) {
-          const { data: urlData } = await supabase
-            .storage
-            .from('financial-documents')
+            const { data: urlData } = await supabase
+              .storage
+              .from('financial-documents')
               .createSignedUrl(doc.file_path, 3600); // URL valid for 1 hour
 
             return {
@@ -164,15 +158,25 @@ const FinancialDocuments = () => {
   const handleFileSelect = (event, docType) => {
     const file = event.target.files[0];
     if (file) {
+      if (selectedCategory === 'other_documents' && !documentType.trim()) {
+        setUploadError('Please enter a document type before uploading');
+        return;
+      }
       setFileToUpload(file);
-      setDocumentType(docType);
+      setDocumentType(selectedCategory === 'other_documents' ? documentType : docType);
       setShowConfirmation(true);
     }
   };
 
   const handleConfirmedUpload = async () => {
-    if (!fileToUpload || !documentType) return;
+    if (!fileToUpload) return;
     
+    if (selectedCategory === 'other_documents' && !documentType.trim()) {
+      setUploadError('Please enter a document type before uploading');
+      setShowConfirmation(false);
+      return;
+    }
+
     try {
       setShowConfirmation(false);
       setUploading(true);
@@ -221,7 +225,7 @@ const FinancialDocuments = () => {
         user_id: userId,
         doc_type: documentType,
         category: selectedCategory,
-          year: selectedYear,
+        year: selectedYear,
         file_path: filePath,
         file_name: sanitizedFileName,
         file_size: fileToUpload.size,
@@ -257,8 +261,8 @@ const FinancialDocuments = () => {
 
       // Delete from storage
       const { error: storageError } = await supabase
-            .storage
-            .from('financial-documents')
+        .storage
+        .from('financial-documents')
         .remove([document.file_path]);
 
       if (storageError) throw storageError;
@@ -307,91 +311,103 @@ const FinancialDocuments = () => {
     <div className="documents-container">
       <div className="documents-header">
         <h2>Financial Documents</h2>
-        <div className="filters">
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className="year-select"
-          >
-            {yearFolders.map((year) => (
-              <option key={year} value={year}>
-                  {year}
-              </option>
-            ))}
-          </select>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="category-select"
-          >
-            {Object.entries(documentCategories).map(([key, value]) => (
-              <option key={key} value={key}>
-                {value.name}
-              </option>
-            ))}
-          </select>
-            </div>
-          </div>
-          
-      {uploadError && (
-        <div className="error-message">
-          {uploadError}
-            </div>
-      )}
+      </div>
 
-      {successMessage && (
-        <div className="success-message">
-          {successMessage}
+      <div className="year-selector">
+        <div className="year-selector-label">Select Year:</div>
+        <div className="year-tabs">
+          {yearFolders.map((year) => (
+            <button
+              key={year}
+              className={`year-tab ${selectedYear === year ? 'active' : ''}`}
+              onClick={() => setSelectedYear(year)}
+            >
+              {year}
+            </button>
+          ))}
         </div>
-      )}
-        
-      <div className="documents-grid">
-        {selectedCategory !== 'all' && (
-        <div className="upload-section">
-            <h3>Upload New Document</h3>
+      </div>
+
+      <div className="category-selector">
+        <div className="category-selector-label">Document Category:</div>
+        <div className="category-buttons">
+          {Object.entries(documentCategories).map(([key, value]) => (
+            <button
+              key={key}
+              className={`category-button ${selectedCategory === key ? 'active' : ''}`}
+              onClick={() => setSelectedCategory(key)}
+            >
+              <span className="category-icon">{value.icon}</span>
+              {value.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {selectedCategory !== 'all' && (
+        <>
+          <div className="document-type-section">
+            <div className="document-type-label">Document Type</div>
             {selectedCategory === 'other_documents' ? (
-              <div className="custom-doc-type">
+              <div className="document-type-input-container">
                 <input
                   type="text"
                   value={documentType}
-                  onChange={(e) => setDocumentType(e.target.value)}
+                  onChange={(e) => {
+                    setDocumentType(e.target.value);
+                    setUploadError(null); // Clear error when user starts typing
+                  }}
                   placeholder="Enter document type"
-                  className="document-type-input"
+                  className={`document-type-input ${!documentType.trim() && uploadError ? 'error' : ''}`}
                 />
-                {documentType && (
-                  <input
-                    type="file"
-                    onChange={(e) => handleFileSelect(e, documentType)}
-                    className="file-input"
-                  />
-                )}
+                {uploadError && <div className="input-error-message">{uploadError}</div>}
               </div>
             ) : (
-              <>
-            <select 
-              value={documentType} 
-              onChange={(e) => setDocumentType(e.target.value)}
-                  className="document-type-select"
-            >
-              <option value="">Select Document Type</option>
-                  {documentCategories[selectedCategory].types.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-              ))}
-            </select>
-                {documentType && (
-                  <input
-                    type="file"
-                    onChange={(e) => handleFileSelect(e, documentType)}
-                    className="file-input"
-                  />
-                )}
-              </>
+              <select
+                value={documentType}
+                onChange={(e) => setDocumentType(e.target.value)}
+                className="document-type-select"
+              >
+                <option value="">Select Document Type</option>
+                {documentCategories[selectedCategory].types.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
             )}
           </div>
-        )}
 
+          <div 
+            className={`upload-section ${(selectedCategory === 'other_documents' && !documentType.trim()) ? 'disabled' : ''}`} 
+            onClick={() => {
+              if (selectedCategory === 'other_documents' && !documentType.trim()) {
+                setUploadError('Please enter a document type before uploading');
+                return;
+              }
+              document.getElementById('file-input').click();
+            }}
+          >
+            <span className="upload-icon">⬆️</span>
+            <div className="upload-text">
+              Upload Document
+              <small>to {selectedYear} folder</small>
+            </div>
+            <input
+              id="file-input"
+              type="file"
+              onChange={(e) => handleFileSelect(e, documentType)}
+              style={{ display: 'none' }}
+              disabled={selectedCategory === 'other_documents' && !documentType.trim()}
+            />
+          </div>
+        </>
+      )}
+
+      {uploadError && <div className="error-message">{uploadError}</div>}
+      {successMessage && <div className="success-message">{successMessage}</div>}
+
+      <div className="documents-list">
         {loading ? (
           <div className="loading">Loading documents...</div>
         ) : documents.length === 0 ? (
@@ -400,21 +416,23 @@ const FinancialDocuments = () => {
           </div>
         ) : (
           documents.map((doc) => (
-            <div key={doc.id} className="document-card">
+            <div key={doc.id} className="document-item">
+              <div className="document-icon">📄</div>
               <div className="document-info">
-                <h4>{doc.doc_type}</h4>
-                <p>Category: {doc.category}</p>
-                <p>Year: {doc.year}</p>
-                <p>Size: {formatFileSize(doc.file_size)}</p>
-                <p>Uploaded: {formatDate(doc.upload_date)}</p>
-    </div>
+                <div className="document-name">{doc.file_name}</div>
+                <div className="document-tags">
+                  <span className="document-tag tag-business">{doc.doc_type}</span>
+                  <span className="document-tag tag-tax">{doc.category}</span>
+                </div>
+              </div>
+              <div className="document-size">{formatFileSize(doc.file_size)}</div>
               <div className="document-actions">
                 {doc.signed_url && (
                   <a
                     href={doc.signed_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="view-button"
+                    className="action-button view-button"
                   >
                     View
                   </a>
@@ -424,26 +442,26 @@ const FinancialDocuments = () => {
                     setDocumentToDelete(doc);
                     setShowDeleteConfirmation(true);
                   }}
-                  className="delete-button"
+                  className="action-button delete-button"
                 >
                   Delete
                 </button>
-</div>
-        </div>
+              </div>
+            </div>
           ))
         )}
       </div>
-      
+
       {showConfirmation && (
         <div className="confirmation-modal">
           <div className="confirmation-content">
-              <h3>Confirm Upload</h3>
+            <h3>Confirm Upload</h3>
             <p>Are you sure you want to upload this document?</p>
             <div className="confirmation-actions">
               <button
                 onClick={handleConfirmedUpload}
                 disabled={uploading}
-                className="confirm-button"
+                className="action-button view-button"
               >
                 {uploading ? 'Uploading...' : 'Confirm'}
               </button>
@@ -453,7 +471,7 @@ const FinancialDocuments = () => {
                   setFileToUpload(null);
                   setDocumentType('');
                 }}
-                className="cancel-button"
+                className="action-button delete-button"
               >
                 Cancel
               </button>
@@ -464,14 +482,14 @@ const FinancialDocuments = () => {
 
       {showDeleteConfirmation && (
         <div className="confirmation-modal">
-            <div className="confirmation-content">
+          <div className="confirmation-content">
             <h3>Confirm Delete</h3>
             <p>Are you sure you want to delete this document?</p>
             <div className="confirmation-actions">
               <button
                 onClick={() => handleDelete(documentToDelete)}
                 disabled={deleteInProgress}
-                className="delete-button"
+                className="action-button delete-button"
               >
                 {deleteInProgress ? 'Deleting...' : 'Delete'}
               </button>
@@ -480,7 +498,7 @@ const FinancialDocuments = () => {
                   setShowDeleteConfirmation(false);
                   setDocumentToDelete(null);
                 }}
-                className="cancel-button"
+                className="action-button view-button"
               >
                 Cancel
               </button>
