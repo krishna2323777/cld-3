@@ -17,6 +17,11 @@ const FinancialDocuments = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [documentToDelete, setDocumentToDelete] = useState(null);
   const [deleteInProgress, setDeleteInProgress] = useState(false);
+  const [isBulkUpload, setIsBulkUpload] = useState(false);
+  const [bulkFiles, setBulkFiles] = useState([]);
+  const [bulkUploadProgress, setBulkUploadProgress] = useState(0);
+  const [processingZip, setProcessingZip] = useState(false);
+  const [cleanupInProgress, setCleanupInProgress] = useState(false);
 
   // Document categories with their corresponding types
   const documentCategories = {
@@ -25,6 +30,13 @@ const FinancialDocuments = () => {
       icon: '📁',
       types: []
     },
+    'invoices': {
+      name: 'Invoices',
+      icon: '🧾',
+      types: [],
+      allowMultiple: true,
+      useTextInput: true
+    },
     'financial_statements': {
       name: 'Financial Statements',
       icon: '📊',
@@ -32,7 +44,8 @@ const FinancialDocuments = () => {
         'Profit & Loss Statement',
         'Balance Sheet',
         'Cash Flow Statement',
-        'Audited Financial Report'
+        'Audited Financial Report',
+        'Financial Statements - Bulk Upload'
       ]
     },
     'tax_compliance': {
@@ -42,7 +55,8 @@ const FinancialDocuments = () => {
         'Business Tax Return',
         'GST/VAT Return',
         'Withholding Tax Statement',
-        'Tax Clearance Certificate'
+        'Tax Clearance Certificate',
+        'Tax Documents - Bulk Upload'
       ]
     },
     'banking_investment': {
@@ -52,7 +66,8 @@ const FinancialDocuments = () => {
         'Business Bank Statement',
         'Fixed Deposit Certificate',
         'Investment Portfolio',
-        'Loan & Credit Agreement'
+        'Loan & Credit Agreement',
+        'Banking Documents - Bulk Upload'
       ]
     },
     'accounts': {
@@ -62,7 +77,8 @@ const FinancialDocuments = () => {
         'Outstanding Invoice',
         'Payment Record',
         'Accounts Receivable Report',
-        'Accounts Payable Report'
+        'Accounts Payable Report',
+        'Account Documents - Bulk Upload'
       ]
     },
     'valuation': {
@@ -72,7 +88,8 @@ const FinancialDocuments = () => {
         'Shareholder Agreement',
         'Company Valuation Report',
         'Business Ownership Document',
-        'Share Certificate'
+        'Share Certificate',
+        'Valuation Documents - Bulk Upload'
       ]
     },
     'debt_loan': {
@@ -82,22 +99,15 @@ const FinancialDocuments = () => {
         'Loan Agreement',
         'Repayment Schedule',
         'Collateral Documentation',
-        'Debt Restructuring Agreement'
+        'Debt Restructuring Agreement',
+        'Loan Documents - Bulk Upload'
       ]
     },
     'other_documents': {
       name: 'Other Documents',
       icon: '📄',
-      types: [
-        'Contract',
-        'Agreement',
-        'Certificate',
-        'License',
-        'Permit',
-        'Report',
-        'Statement',
-        'Other'
-      ]
+      types: [  ],
+      allowMultiple: true // Special flag for Other Documents category
     }
   };
 
@@ -128,162 +138,401 @@ const FinancialDocuments = () => {
 
       if (error) throw error;
 
-      // Get signed URLs for documents
-      const documentsWithUrls = await Promise.all(
-        data.map(async (doc) => {
-          if (doc.file_path) {
-            const { data: urlData } = await supabase
+      // Get signed URLs for documents and handle missing files
+      const documentsWithUrls = [];
+      const documentsToDelete = new Set(); // Use Set to prevent duplicates
+
+      // First verify file existence in storage
+      for (const doc of data) {
+        if (doc.file_path) {
+          try {
+            // Check if file exists in storage first
+            const { data: fileExists } = await supabase
               .storage
               .from('financial-documents')
-              .createSignedUrl(doc.file_path, 3600); // URL valid for 1 hour
+              .list(doc.file_path.split('/').slice(0, -1).join('/'), {
+                limit: 1,
+                offset: 0,
+                search: doc.file_path.split('/').pop()
+              });
 
-            return {
-              ...doc,
-              signed_url: urlData?.signedUrl
-            };
+            if (!fileExists || fileExists.length === 0) {
+              console.log(`File not found in storage for document ${doc.id}, marking for deletion`);
+              documentsToDelete.add(doc.id);
+              continue;
+            }
+
+            // Only try to get signed URL if file exists
+            const { data: urlData, error: signError } = await supabase
+              .storage
+              .from('financial-documents')
+              .createSignedUrl(doc.file_path, 3600);
+
+            if (signError) {
+              console.error(`Error getting signed URL for document ${doc.id}:`, signError);
+              if (signError.message.includes('Object not found') || signError.statusCode === 400) {
+                documentsToDelete.add(doc.id);
+                continue;
+              }
+            }
+
+            if (urlData?.signedUrl) {
+              documentsWithUrls.push({
+                ...doc,
+                signed_url: urlData.signedUrl
+              });
+            }
+          } catch (error) {
+            console.error(`Error processing document ${doc.id}:`, error);
+            if (error.message.includes('Object not found') || error.statusCode === 400) {
+              documentsToDelete.add(doc.id);
+            }
           }
-          return doc;
-        })
-      );
+        }
+      }
 
-      setDocuments(documentsWithUrls);
+      // Clean up orphaned records in batches
+      const docsToDelete = Array.from(documentsToDelete);
+      if (docsToDelete.length > 0 && !cleanupInProgress) {
+        try {
+          setCleanupInProgress(true);
+          // Delete in batches of 10 to avoid overwhelming the database
+          const batchSize = 10;
+          for (let i = 0; i < docsToDelete.length; i += batchSize) {
+            const batch = docsToDelete.slice(i, i + batchSize);
+            const { error: deleteError } = await supabase
+              .from('financial_documents')
+              .delete()
+              .in('id', batch);
+
+            if (deleteError) {
+              console.error(`Error cleaning up batch ${i / batchSize + 1}:`, deleteError);
+            }
+          }
+          console.log(`Cleaned up ${docsToDelete.length} orphaned records`);
+          
+          // Set the documents state with only the valid documents
+          setDocuments(documentsWithUrls);
+        } catch (deleteError) {
+          console.error('Error during cleanup:', deleteError);
+        } finally {
+          setCleanupInProgress(false);
+        }
+      } else {
+        // If no cleanup needed or cleanup in progress, just update the documents
+        setDocuments(documentsWithUrls);
+      }
     } catch (error) {
       console.error('Error fetching documents:', error);
-      setUploadError(error.message);
+      setUploadError('Error fetching documents. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileSelect = (event, docType) => {
-    const file = event.target.files[0];
-    if (file) {
-      if (selectedCategory === 'other_documents' && !documentType.trim()) {
-        setUploadError('Please enter a document type before uploading');
-        return;
+  const handleFileSelect = async (event, selectedDocType) => {
+    const files = Array.from(event.target.files);
+    
+    if (files.length === 0) return;
+
+    setUploadError(null);
+    
+    // Check if it's a bulk upload or Other Documents category
+    if (selectedDocType.includes('Bulk Upload') || 
+        (selectedCategory === 'other_documents' && documentCategories[selectedCategory].allowMultiple)) {
+      
+      // Handle ZIP files
+      if (files.length === 1 && files[0].type === 'application/zip') {
+        const extractedFiles = await processZipFile(files[0]);
+        if (extractedFiles) {
+          setBulkFiles(extractedFiles);
+          setIsBulkUpload(true);
+          setShowConfirmation(true);
+        }
+      } else {
+        setBulkFiles(files);
+        setIsBulkUpload(true);
+        setShowConfirmation(true);
       }
-      setFileToUpload(file);
-      setDocumentType(selectedCategory === 'other_documents' ? documentType : docType);
+    } else {
+      // Single file upload
+      setFileToUpload(files[0]);
+      setIsBulkUpload(false);
       setShowConfirmation(true);
     }
   };
 
+  const processZipFile = async (zipFile) => {
+    try {
+      setProcessingZip(true);
+      const JSZip = (await import('jszip')).default;
+      const zip = await JSZip.loadAsync(zipFile);
+      const files = [];
+      
+      // Process each file in the ZIP
+      for (const [filename, zipEntry] of Object.entries(zip.files)) {
+        if (!zipEntry.dir) {
+          const blob = await zipEntry.async('blob');
+          const file = new File([blob], filename, { type: blob.type });
+          files.push(file);
+        }
+      }
+      
+      return files;
+    } catch (error) {
+      console.error('Error processing ZIP file:', error);
+      setUploadError('Error processing ZIP file. Please ensure it\'s a valid ZIP archive.');
+      return null;
+    } finally {
+      setProcessingZip(false);
+    }
+  };
+
   const handleConfirmedUpload = async () => {
-    if (!fileToUpload) return;
-    
-    if (selectedCategory === 'other_documents' && !documentType.trim()) {
-      setUploadError('Please enter a document type before uploading');
-      setShowConfirmation(false);
+    if (isBulkUpload) {
+      if (bulkFiles.length === 0) return;
+      
+      if (selectedCategory === 'other_documents' && !documentType.trim()) {
+        setUploadError('Please enter a document type before uploading');
+        setShowConfirmation(false);
+        return;
+      }
+
+      try {
+        setShowConfirmation(false);
+        setUploading(true);
+        setUploadError(null);
+        setSuccessMessage(null);
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          throw new Error('No user session found');
+        }
+
+        const userId = sessionData.session.user.id;
+        let successCount = 0;
+
+        for (let i = 0; i < bulkFiles.length; i++) {
+          const file = bulkFiles[i];
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const sanitizedFileName = file.name.replace(/\s+/g, '_');
+          const fileName = `${timestamp}_${sanitizedFileName}`;
+          const filePath = `${userId}/${selectedYear}/${documentType}/${fileName}`;
+
+          // Create directory structure if it doesn't exist
+          const dirPath = `${userId}/${selectedYear}/${documentType}`;
+          const { data: dirExists, error: dirCheckError } = await supabase
+            .storage
+            .from('financial-documents')
+            .list(dirPath);
+
+          if (dirCheckError || !dirExists) {
+            await supabase
+              .storage
+              .from('financial-documents')
+              .upload(`${dirPath}/.emptyFolderPlaceholder`, new Blob(['']));
+          }
+
+          // Upload the file
+          const { data: uploadData, error: uploadError } = await supabase
+            .storage
+            .from('financial-documents')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: true,
+              contentType: file.type
+            });
+
+          if (uploadError) {
+            console.error(`Error uploading ${file.name}:`, uploadError);
+            continue;
+          }
+
+          // Insert document record into database
+          const documentData = {
+            user_id: userId,
+            doc_type: documentType,
+            category: selectedCategory,
+            year: selectedYear,
+            file_path: filePath,
+            file_name: sanitizedFileName,
+            file_size: file.size,
+            content_type: file.type
+          };
+
+          const { error: dbError } = await supabase
+            .from('financial_documents')
+            .insert(documentData);
+
+          if (dbError) {
+            console.error(`Error saving ${file.name} to database:`, dbError);
+            continue;
+          }
+
+          successCount++;
+          setBulkUploadProgress((successCount / bulkFiles.length) * 100);
+        }
+
+        setSuccessMessage(`Successfully uploaded ${successCount} out of ${bulkFiles.length} files`);
+        fetchDocuments();
+      } catch (error) {
+        console.error('Error in bulk upload:', error);
+        setUploadError(error.message);
+      } finally {
+        setUploading(false);
+        setBulkFiles([]);
+        setDocumentType('');
+        setBulkUploadProgress(0);
+        setTimeout(() => {
+          setSuccessMessage(null);
+          setUploadError(null);
+        }, 5000);
+      }
+    } else {
+      if (!fileToUpload) return;
+      
+      if (selectedCategory === 'other_documents' && !documentType.trim()) {
+        setUploadError('Please enter a document type before uploading');
+        setShowConfirmation(false);
+        return;
+      }
+
+      try {
+        setShowConfirmation(false);
+        setUploading(true);
+        setUploadError(null);
+        setSuccessMessage(null);
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          throw new Error('No user session found');
+        }
+
+        const userId = sessionData.session.user.id;
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const sanitizedFileName = fileToUpload.name.replace(/\s+/g, '_');
+        const fileName = `${timestamp}_${sanitizedFileName}`;
+        const filePath = `${userId}/${selectedYear}/${documentType}/${fileName}`;
+
+        // Create directory structure if it doesn't exist
+        const dirPath = `${userId}/${selectedYear}/${documentType}`;
+        const { data: dirExists, error: dirCheckError } = await supabase
+          .storage
+          .from('financial-documents')
+          .list(dirPath);
+
+        if (dirCheckError || !dirExists) {
+          await supabase
+            .storage
+            .from('financial-documents')
+            .upload(`${dirPath}/.emptyFolderPlaceholder`, new Blob(['']));
+        }
+
+        // Upload the file
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('financial-documents')
+          .upload(filePath, fileToUpload, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: fileToUpload.type
+          });
+
+        if (uploadError) throw uploadError;
+
+        // Insert document record into database
+        const documentData = {
+          user_id: userId,
+          doc_type: documentType,
+          category: selectedCategory,
+          year: selectedYear,
+          file_path: filePath,
+          file_name: sanitizedFileName,
+          file_size: fileToUpload.size,
+          content_type: fileToUpload.type
+        };
+
+        const { error: dbError } = await supabase
+          .from('financial_documents')
+          .insert(documentData);
+
+        if (dbError) throw dbError;
+
+        setSuccessMessage('Document uploaded successfully!');
+        fetchDocuments();
+      } catch (error) {
+        console.error('Error uploading document:', error);
+        setUploadError(error.message);
+      } finally {
+        setUploading(false);
+        setFileToUpload(null);
+        setDocumentType('');
+        setTimeout(() => {
+          setSuccessMessage(null);
+          setUploadError(null);
+        }, 5000);
+      }
+    }
+  };
+
+  const handleDelete = async (document) => {
+    if (!document || !document.id) {
+      console.error('Invalid document to delete');
+      setUploadError('Invalid document to delete');
       return;
     }
 
     try {
-      setShowConfirmation(false);
-      setUploading(true);
+      setDeleteInProgress(true);
       setUploadError(null);
-      setSuccessMessage(null);
 
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
         throw new Error('No user session found');
       }
 
-      const userId = sessionData.session.user.id;
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const sanitizedFileName = fileToUpload.name.replace(/\s+/g, '_');
-      const fileName = `${timestamp}_${sanitizedFileName}`;
-      const filePath = `${userId}/${selectedYear}/${documentType}/${fileName}`;
+      // First try to delete from storage
+      if (document.file_path) {
+        try {
+          const { error: storageError } = await supabase
+            .storage
+            .from('financial-documents')
+            .remove([document.file_path]);
 
-      // Create directory structure if it doesn't exist
-      const dirPath = `${userId}/${selectedYear}/${documentType}`;
-      const { data: dirExists, error: dirCheckError } = await supabase
-        .storage
-        .from('financial-documents')
-        .list(dirPath);
-
-      if (dirCheckError || !dirExists) {
-        await supabase
-          .storage
-          .from('financial-documents')
-          .upload(`${dirPath}/.emptyFolderPlaceholder`, new Blob(['']));
+          if (storageError) {
+            console.error('Storage deletion error:', storageError);
+            // Continue with database deletion even if storage deletion fails
+          }
+        } catch (storageError) {
+          console.error('Storage deletion error:', storageError);
+          // Continue with database deletion even if storage deletion fails
+        }
       }
 
-      // Upload the file
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('financial-documents')
-        .upload(filePath, fileToUpload, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: fileToUpload.type
-        });
-
-      if (uploadError) throw uploadError;
-
-      // Insert document record into database
-      const documentData = {
-        user_id: userId,
-        doc_type: documentType,
-        category: selectedCategory,
-        year: selectedYear,
-        file_path: filePath,
-        file_name: sanitizedFileName,
-        file_size: fileToUpload.size,
-        content_type: fileToUpload.type
-      };
-
-      const { error: dbError } = await supabase
-        .from('financial_documents')
-        .insert(documentData);
-
-      if (dbError) throw dbError;
-
-      setSuccessMessage('Document uploaded successfully!');
-      fetchDocuments();
-    } catch (error) {
-      console.error('Error uploading document:', error);
-      setUploadError(error.message);
-    } finally {
-      setUploading(false);
-      setFileToUpload(null);
-      setDocumentType('');
-      setTimeout(() => {
-        setSuccessMessage(null);
-        setUploadError(null);
-      }, 5000);
-    }
-  };
-
-  const handleDelete = async (document) => {
-    try {
-      setDeleteInProgress(true);
-      setUploadError(null);
-
-      // Delete from storage
-      const { error: storageError } = await supabase
-        .storage
-        .from('financial-documents')
-        .remove([document.file_path]);
-
-      if (storageError) throw storageError;
-
-      // Delete from database
+      // Then delete from database
       const { error: dbError } = await supabase
         .from('financial_documents')
         .delete()
-        .eq('id', document.id);
+        .eq('id', document.id)
+        .eq('user_id', sessionData.session.user.id);
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        throw new Error(`Failed to delete document record: ${dbError.message}`);
+      }
 
+      // Remove from local state immediately
+      setDocuments(prevDocuments => prevDocuments.filter(doc => doc.id !== document.id));
       setSuccessMessage('Document deleted successfully!');
-      fetchDocuments();
+
     } catch (error) {
-      console.error('Error deleting document:', error);
-      setUploadError(error.message);
+      console.error('Error in delete operation:', error);
+      setUploadError(error.message || 'Failed to delete document');
     } finally {
       setDeleteInProgress(false);
       setShowDeleteConfirmation(false);
       setDocumentToDelete(null);
+      // Refresh the documents list to ensure everything is in sync
+      await fetchDocuments();
       setTimeout(() => {
         setSuccessMessage(null);
         setUploadError(null);
@@ -347,59 +596,92 @@ const FinancialDocuments = () => {
       {selectedCategory !== 'all' && (
         <>
           <div className="document-type-section">
-            <div className="document-type-label">Document Type</div>
-            {selectedCategory === 'other_documents' ? (
-              <div className="document-type-input-container">
-                <input
-                  type="text"
+            <div className="document-type-container">
+              <div className="document-type-label">Document Type</div>
+              {(selectedCategory === 'other_documents' || selectedCategory === 'invoices') ? (
+                <div className="document-type-input-container">
+                  <input
+                    type="text"
+                    value={documentType}
+                    onChange={(e) => {
+                      setDocumentType(e.target.value);
+                      setUploadError(null);
+                    }}
+                    placeholder={selectedCategory === 'invoices' ? "Enter invoice type" : "Enter document type"}
+                    className={`document-type-input ${!documentType.trim() && uploadError ? 'error' : ''}`}
+                  />
+                  {uploadError && <div className="input-error-message">{uploadError}</div>}
+                </div>
+              ) : (
+                <select
                   value={documentType}
                   onChange={(e) => {
                     setDocumentType(e.target.value);
-                    setUploadError(null); // Clear error when user starts typing
+                    setIsBulkUpload(e.target.value.includes('Bulk Upload'));
                   }}
-                  placeholder="Enter document type"
-                  className={`document-type-input ${!documentType.trim() && uploadError ? 'error' : ''}`}
-                />
-                {uploadError && <div className="input-error-message">{uploadError}</div>}
-              </div>
-            ) : (
-              <select
-                value={documentType}
-                onChange={(e) => setDocumentType(e.target.value)}
-                className="document-type-select"
-              >
-                <option value="">Select Document Type</option>
-                {documentCategories[selectedCategory].types.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          <div 
-            className={`upload-section ${(selectedCategory === 'other_documents' && !documentType.trim()) ? 'disabled' : ''}`} 
-            onClick={() => {
-              if (selectedCategory === 'other_documents' && !documentType.trim()) {
-                setUploadError('Please enter a document type before uploading');
-                return;
-              }
-              document.getElementById('file-input').click();
-            }}
-          >
-            <span className="upload-icon">⬆️</span>
-            <div className="upload-text">
-              Upload Document
-              <small>to {selectedYear} folder</small>
+                  className="document-type-select"
+                >
+                  <option value="">Select Document Type</option>
+                  {documentCategories[selectedCategory].types.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
-            <input
-              id="file-input"
-              type="file"
-              onChange={(e) => handleFileSelect(e, documentType)}
-              style={{ display: 'none' }}
-              disabled={selectedCategory === 'other_documents' && !documentType.trim()}
-            />
+
+            <div className="upload-section">
+              <input
+                id="file-input"
+                type="file"
+                multiple={documentType.includes('Bulk Upload') || 
+                         selectedCategory === 'invoices' ||
+                         (selectedCategory === 'other_documents' && documentCategories[selectedCategory].allowMultiple)}
+                onChange={(e) => handleFileSelect(e, documentType)}
+                style={{ display: 'none' }}
+                accept=".zip,image/*,.pdf,.doc,.docx,.xls,.xlsx,.csv"
+                disabled={!documentType || documentType.trim() === '' || 
+                         ((selectedCategory === 'other_documents' || selectedCategory === 'invoices') && !documentType.trim())}
+              />
+              <div 
+                className={`upload-button ${(!documentType || ((selectedCategory === 'other_documents' || selectedCategory === 'invoices') && !documentType.trim())) ? 'disabled' : ''}`}
+                data-multiple={documentType.includes('Bulk Upload') || 
+                             selectedCategory === 'invoices' ||
+                             (selectedCategory === 'other_documents' && documentCategories[selectedCategory].allowMultiple)}
+                onClick={() => {
+                  // First check if document type is empty or only contains whitespace
+                  if (!documentType || documentType.trim() === '') {
+                    setUploadError('Please select or enter a document type before uploading');
+                    return;
+                  }
+
+                  // For text input categories, ensure there's actual text
+                  if ((selectedCategory === 'other_documents' || selectedCategory === 'invoices') && !documentType.trim()) {
+                    setUploadError('Please enter a valid document type before uploading');
+                    return;
+                  }
+
+                  // Clear any previous errors
+                  setUploadError(null);
+                  document.getElementById('file-input').click();
+                }}
+              >
+                <span className="upload-icon">
+                  {documentType.includes('Bulk Upload') || 
+                   selectedCategory === 'invoices' ||
+                   (selectedCategory === 'other_documents' && documentCategories[selectedCategory].allowMultiple) 
+                    ? '📦' : '📄'}
+                </span>
+                <div className="upload-text">
+                  {documentType.includes('Bulk Upload') || 
+                   selectedCategory === 'invoices' ||
+                   (selectedCategory === 'other_documents' && documentCategories[selectedCategory].allowMultiple)
+                    ? 'Select Files' : 'Select File'}
+                  <small>to {selectedYear}</small>
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}
@@ -453,27 +735,58 @@ const FinancialDocuments = () => {
       </div>
 
       {showConfirmation && (
-        <div className="confirmation-modal">
-          <div className="confirmation-content">
-            <h3>Confirm Upload</h3>
-            <p>Are you sure you want to upload this document?</p>
+        <div className="confirmation-overlay">
+          <div className="confirmation-dialog">
+            <div className="confirmation-header">
+              <h3>Confirm Upload</h3>
+            </div>
+            <div className="confirmation-content">
+              {isBulkUpload ? (
+                <>
+                  <p className="doc-type">Document Type: {documentType}</p>
+                  <p>Selected Files: {bulkFiles.length}</p>
+                  <div className="file-details">
+                    {bulkFiles.slice(0, 3).map((file, index) => (
+                      <div key={index} className="file-info">
+                        <span className="file-name">{file.name}</span>
+                        <span className="file-size">({formatFileSize(file.size)})</span>
+                      </div>
+                    ))}
+                    {bulkFiles.length > 3 && (
+                      <div className="file-info">
+                        <span className="file-name">...and {bulkFiles.length - 3} more files</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="doc-type">Document Type: {documentType}</p>
+                  <div className="file-details">
+                    <span className="file-name">{fileToUpload?.name}</span>
+                    <span className="file-size">({formatFileSize(fileToUpload?.size)})</span>
+                  </div>
+                </>
+              )}
+              <p className="confirmation-note">Files will be uploaded to the {selectedYear} folder.</p>
+            </div>
             <div className="confirmation-actions">
-              <button
-                onClick={handleConfirmedUpload}
-                disabled={uploading}
-                className="action-button view-button"
-              >
-                {uploading ? 'Uploading...' : 'Confirm'}
-              </button>
-              <button
+              <button 
+                className="cancel-button" 
                 onClick={() => {
                   setShowConfirmation(false);
+                  setBulkFiles([]);
                   setFileToUpload(null);
-                  setDocumentType('');
                 }}
-                className="action-button delete-button"
               >
                 Cancel
+              </button>
+              <button 
+                className="confirm-button"
+                onClick={handleConfirmedUpload}
+                disabled={uploading || (!isBulkUpload && !fileToUpload) || (isBulkUpload && bulkFiles.length === 0)}
+              >
+                {uploading ? 'Uploading...' : 'Confirm Upload'}
               </button>
             </div>
           </div>
