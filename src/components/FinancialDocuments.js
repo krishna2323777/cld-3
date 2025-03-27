@@ -77,20 +77,6 @@ const FinancialDocuments = () => {
         'Collateral Documentation',
         'Debt Restructuring Agreement'
       ]
-    },
-    'general': {
-      name: 'General Financial Documents',
-      types: [
-        'Annual Report',
-        'Quarterly Statement',
-        'Tax Return',
-        'Audit Report',
-        'Bank Statement',
-        'Invoice',
-        'Receipt',
-        'Budget',
-        'Other'
-      ]
     }
   };
   
@@ -437,7 +423,7 @@ const FinancialDocuments = () => {
       case 'accounts': return '💰';
       case 'valuation': return '📈';
       case 'debt_loan': return '📄';
-      case 'general': default: return '📁';
+      default: return '📁';
     }
   };
   
