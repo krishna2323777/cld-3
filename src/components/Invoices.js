@@ -28,7 +28,7 @@ const Invoices = () => {
 
       if (error) throw error;
 
-      // Get signed URLs for invoice PDFs
+      // Get signed URLs for invoice PDFs and add default status
       const invoicesWithUrls = await Promise.all(
         data.map(async (invoice) => {
           if (invoice.pdf_url) {
@@ -39,10 +39,14 @@ const Invoices = () => {
 
             return {
               ...invoice,
-              signed_pdf_url: urlData?.signedUrl
+              signed_pdf_url: urlData?.signedUrl,
+              status: invoice.status || 'paid' // Set default status as 'paid'
             };
           }
-          return invoice;
+          return {
+            ...invoice,
+            status: invoice.status || 'paid' // Set default status as 'paid'
+          };
         })
       );
 
@@ -65,7 +69,7 @@ const Invoices = () => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'EUR'
     }).format(amount);
   };
 
@@ -80,7 +84,7 @@ const Invoices = () => {
       case 'draft':
         return 'status-draft';
       default:
-        return 'status-unknown';
+        return 'status-paid'; // Default to paid status
     }
   };
 
@@ -95,7 +99,7 @@ const Invoices = () => {
       case 'draft':
         return 'Draft';
       default:
-        return 'Unknown';
+        return 'Paid'; // Default to Paid text
     }
   };
 
@@ -128,6 +132,7 @@ const Invoices = () => {
               <th>Due Date</th>
               <th>Services</th>
               <th>Total</th>
+              <th>Status</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -153,6 +158,11 @@ const Invoices = () => {
                 </td>
                 <td className="total-cell">
                   {formatCurrency(invoice.total)}
+                </td>
+                <td>
+                  <span className={`status-badge ${getStatusBadgeClass(invoice.status)}`}>
+                    {getStatusText(invoice.status)}
+                  </span>
                 </td>
                 <td>
                   {invoice.signed_pdf_url && (
