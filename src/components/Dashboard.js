@@ -5,10 +5,10 @@ import './Dashboard.css';
 
 // Initialize Supabase client
 const dummyFinancialData = {
-  cash_balance: 342500.75,
-  revenue: 67450.30,
-  expenses: 48250.80,
-  net_burn: 19199.50
+  cash_balance: 0,
+  revenue: 0,
+  expenses: 0,
+  net_burn: 0
 };
 
 const Dashboard = () => {
@@ -67,30 +67,30 @@ const Dashboard = () => {
       }
 
       const userId = sessionData.session.user.id;
-      console.log('User ID:', userId);
-      console.log('Access Token:', sessionData.session.access_token);
 
+      // Fetch the most recent financial data for the user
       const { data, error } = await supabase
         .from('financial_data')
         .select('cash_balance, revenue, expenses, net_burn')
         .eq('client_id', userId)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
 
       if (error) {
-        console.error('Error fetching financial data:', JSON.stringify(error, null, 2));
+        console.error('Error fetching financial data:', error);
         setUseDummyData(true);
         setFinancialData(dummyFinancialData);
+      } else if (data) {
+        setUseDummyData(false);
+        setFinancialData(data);
       } else {
-        // If no real data exists, use dummy data
-        if (!data) {
-          setUseDummyData(true);
-          setFinancialData(dummyFinancialData);
-        } else {
-          setFinancialData(data);
-        }
+        // If no data exists, use dummy data
+        setUseDummyData(true);
+        setFinancialData(dummyFinancialData);
       }
     } catch (error) {
-      console.error('Error in fetchFinancialData:', JSON.stringify(error, null, 2));
+      console.error('Error in fetchFinancialData:', error);
       setUseDummyData(true);
       setFinancialData(dummyFinancialData);
     } finally {
