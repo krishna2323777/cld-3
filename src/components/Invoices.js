@@ -30,7 +30,7 @@ const Invoices = () => {
 
       // Get signed URLs for invoice PDFs and add default status
       const invoicesWithUrls = await Promise.all(
-        data.map(async (invoice) => {
+        data.map(async (invoice, index) => {
           if (invoice.pdf_url) {
             const { data: urlData } = await supabase
               .storage
@@ -40,12 +40,12 @@ const Invoices = () => {
             return {
               ...invoice,
               signed_pdf_url: urlData?.signedUrl,
-              status: invoice.status || 'paid' // Set default status as 'paid'
+              status: index < 2 ? 'pending' : (invoice.status || 'paid') // Set first two as pending
             };
           }
           return {
             ...invoice,
-            status: invoice.status || 'paid' // Set default status as 'paid'
+            status: index < 2 ? 'pending' : (invoice.status || 'paid') // Set first two as pending
           };
         })
       );
