@@ -125,7 +125,7 @@ const Dashboard = () => {
       <div className="profile-status">
         {userProfile ? (
           <div className="profile-summary">
-            <h3>Welcome, {userProfile.name} from {userProfile.company || "HOCEbranch.AI"}</h3>
+            <h3>Welcome, {userProfile.name} from {userProfile.company || "House Of companies"}</h3>
             <Link to="/profile" className="profile-link">View Profile</Link>
           </div>
         ) : (
