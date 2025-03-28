@@ -31,11 +31,10 @@ const FinancialDocuments = () => {
       types: []
     },
     'invoices': {
-      name: 'Other documents',
-      icon: '📄',
-      types: [],
-      allowMultiple: true,
-      useTextInput: true
+      name: 'Invoices',
+      icon: '🧾',
+      types: [ ],
+      allowMultiple: true
     },
     'financial_statements': {
       name: 'Financial Statements',
@@ -104,8 +103,8 @@ const FinancialDocuments = () => {
       ]
     },
     'other_documents': {
-      name: 'Invoices',
-      icon: '🧾',
+      name: 'Other Documents',
+      icon: '📄',
       types: [  ],
       allowMultiple: true // Special flag for Other Documents category
     }
@@ -237,9 +236,10 @@ const FinancialDocuments = () => {
 
     setUploadError(null);
     
-    // Check if it's a bulk upload or Other Documents category
+    // Check if it's a bulk upload or Other Documents category or Invoices category
     if (selectedDocType.includes('Bulk Upload') || 
-        (selectedCategory === 'other_documents' && documentCategories[selectedCategory].allowMultiple)) {
+        (selectedCategory === 'other_documents' && documentCategories[selectedCategory].allowMultiple) ||
+        (selectedCategory === 'invoices' && documentCategories[selectedCategory].allowMultiple)) {
       
       // Handle ZIP files
       if (files.length === 1 && files[0].type === 'application/zip') {
@@ -584,7 +584,16 @@ const FinancialDocuments = () => {
             <button
               key={key}
               className={`category-button ${selectedCategory === key ? 'active' : ''}`}
-              onClick={() => setSelectedCategory(key)}
+              onClick={() => {
+                setSelectedCategory(key);
+                // Set a default document type "Invoices" when the invoices category is selected
+                if (key === 'invoices') {
+                  setDocumentType('Invoices');
+                } else if (key !== 'other_documents') {
+                  // Reset document type when switching to any category except other_documents
+                  setDocumentType('');
+                }
+              }}
             >
               <span className="category-icon">{value.icon}</span>
               {value.name}
