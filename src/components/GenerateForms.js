@@ -4,10 +4,26 @@ import './GenerateForms.css';
 
 const GenerateForms = () => {
   const [formData, setFormData] = useState({
+    // Company Information
     companyName: '',
     registrationNumber: '',
+    yearOfIncorporation: '',
+    taxId: '',
+    companyEmail: '',
+    companyPhone: '',
+    location: '',
     address: '',
-    directors: [{ name: '', position: '' }],
+    // Management and Leadership
+    founder: {
+      name: '',
+      bio: ''
+    },
+    ceo: {
+      name: '',
+      bio: ''
+    },
+    directors: [{ name: '', position: '', bio: '' }],
+    // Financial Information
     shareCapital: '',
     dateOfIncorporation: ''
   });
@@ -41,8 +57,15 @@ const GenerateForms = () => {
         setFormData({
           companyName: data.company_name || '',
           registrationNumber: data.registration_number || '',
+          yearOfIncorporation: data.year_of_incorporation || '',
+          taxId: data.tax_id || '',
+          companyEmail: data.company_email || '',
+          companyPhone: data.company_phone || '',
+          location: data.location || '',
           address: data.address || '',
-          directors: data.directors || [{ name: '', position: '' }],
+          founder: data.founder || { name: '', bio: '' },
+          ceo: data.ceo || { name: '', bio: '' },
+          directors: data.directors || [{ name: '', position: '', bio: '' }],
           shareCapital: data.share_capital || '',
           dateOfIncorporation: data.date_of_incorporation || ''
         });
@@ -63,6 +86,16 @@ const GenerateForms = () => {
     }));
   };
 
+  const handleNestedInputChange = (category, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [field]: value
+      }
+    }));
+  };
+
   const handleDirectorChange = (index, field, value) => {
     const newDirectors = [...formData.directors];
     newDirectors[index] = {
@@ -78,7 +111,7 @@ const GenerateForms = () => {
   const addDirector = () => {
     setFormData(prev => ({
       ...prev,
-      directors: [...prev.directors, { name: '', position: '' }]
+      directors: [...prev.directors, { name: '', position: '', bio: '' }]
     }));
   };
 
@@ -108,7 +141,14 @@ const GenerateForms = () => {
             user_id: sessionData.session.user.id,
             company_name: formData.companyName,
             registration_number: formData.registrationNumber,
+            year_of_incorporation: formData.yearOfIncorporation,
+            tax_id: formData.taxId,
+            company_email: formData.companyEmail,
+            company_phone: formData.companyPhone,
+            location: formData.location,
             address: formData.address,
+            founder: formData.founder,
+            ceo: formData.ceo,
             directors: formData.directors,
             share_capital: parseFloat(formData.shareCapital),
             date_of_incorporation: formData.dateOfIncorporation,
@@ -146,6 +186,8 @@ const GenerateForms = () => {
       <h1>Company Details Form</h1>
       
       <form onSubmit={handleSubmit} className="company-form">
+        <h2 className="form-section-title">Company Information</h2>
+        
         <div className="form-group">
           <label htmlFor="companyName">Company Name</label>
           <input
@@ -154,40 +196,188 @@ const GenerateForms = () => {
             name="companyName"
             value={formData.companyName}
             onChange={handleInputChange}
-            required
+           
             placeholder="Enter company name"
           />
         </div>
 
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="registrationNumber">Registration Number</label>
+            <input
+              type="text"
+              id="registrationNumber"
+              name="registrationNumber"
+              value={formData.registrationNumber}
+              onChange={handleInputChange}
+              
+              placeholder="Enter registration number"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="yearOfIncorporation">Year of Incorporation</label>
+            <input
+              type="number"
+              id="yearOfIncorporation"
+              name="yearOfIncorporation"
+              value={formData.yearOfIncorporation}
+              onChange={handleInputChange}
+            
+              placeholder="YYYY"
+              min="1900"
+              max={new Date().getFullYear()}
+            />
+          </div>
+        </div>
+
         <div className="form-group">
-          <label htmlFor="registrationNumber">Registration Number</label>
+          <label htmlFor="taxId">Tax ID / VAT Number</label>
           <input
             type="text"
-            id="registrationNumber"
-            name="registrationNumber"
-            value={formData.registrationNumber}
+            id="taxId"
+            name="taxId"
+            value={formData.taxId}
             onChange={handleInputChange}
-            required
-            placeholder="Enter registration number"
+           
+            placeholder="Enter tax identification number"
+          />
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="companyEmail">Company Email</label>
+            <input
+              type="email"
+              id="companyEmail"
+              name="companyEmail"
+              value={formData.companyEmail}
+              onChange={handleInputChange}
+              
+              placeholder="Enter company email"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="companyPhone">Company Phone</label>
+            <input
+              type="tel"
+              id="companyPhone"
+              name="companyPhone"
+              value={formData.companyPhone}
+              onChange={handleInputChange}
+             
+              placeholder="Enter company phone"
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="location">Location</label>
+          <input
+            type="text"
+            id="location"
+            name="location"
+            value={formData.location}
+            onChange={handleInputChange}
+          
+            placeholder="City, Country"
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="address">Address</label>
+          <label htmlFor="address">Full Address</label>
           <textarea
             id="address"
             name="address"
             value={formData.address}
             onChange={handleInputChange}
-            required
-            placeholder="Enter company address"
+            
+            placeholder="Enter company full address"
             rows="3"
           />
         </div>
 
+        <div className="form-group">
+          <label htmlFor="dateOfIncorporation">Date of Incorporation</label>
+          <input
+            type="date"
+            id="dateOfIncorporation"
+            name="dateOfIncorporation"
+            value={formData.dateOfIncorporation}
+            onChange={handleInputChange}
+            
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="shareCapital">Share Capital</label>
+          <input
+            type="number"
+            id="shareCapital"
+            name="shareCapital"
+            value={formData.shareCapital}
+            onChange={handleInputChange}
+            
+            placeholder="Enter share capital"
+            min="0"
+            step="0.01"
+          />
+        </div>
+
+        <h2 className="form-section-title">Management and Leadership</h2>
+        
+        <div className="management-section">
+          <h3>Founder</h3>
+          <div className="form-group">
+            <label htmlFor="founderName">Name</label>
+            <input
+              type="text"
+              id="founderName"
+              value={formData.founder.name}
+              onChange={(e) => handleNestedInputChange('founder', 'name', e.target.value)}
+              placeholder="Enter founder's name"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="founderBio">Bio</label>
+            <textarea
+              id="founderBio"
+              value={formData.founder.bio}
+              onChange={(e) => handleNestedInputChange('founder', 'bio', e.target.value)}
+              placeholder="Enter founder's bio/background"
+              rows="3"
+            />
+          </div>
+        </div>
+
+        <div className="management-section">
+          <h3>CEO</h3>
+          <div className="form-group">
+            <label htmlFor="ceoName">Name</label>
+            <input
+              type="text"
+              id="ceoName"
+              value={formData.ceo.name}
+              onChange={(e) => handleNestedInputChange('ceo', 'name', e.target.value)}
+              placeholder="Enter CEO's name"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="ceoBio">Bio</label>
+            <textarea
+              id="ceoBio"
+              value={formData.ceo.bio}
+              onChange={(e) => handleNestedInputChange('ceo', 'bio', e.target.value)}
+              placeholder="Enter CEO's bio/background"
+              rows="3"
+            />
+          </div>
+        </div>
+
         <div className="form-group directors-section">
           <div className="directors-header">
-            <label>Directors</label>
+            <h3>Directors</h3>
             <button 
               type="button" 
               className="add-director-btn"
@@ -206,7 +396,7 @@ const GenerateForms = () => {
                     value={director.name}
                     onChange={(e) => handleDirectorChange(index, 'name', e.target.value)}
                     placeholder="Director Name"
-                    required
+                    
                   />
                 </div>
                 <div className="form-group">
@@ -215,7 +405,15 @@ const GenerateForms = () => {
                     value={director.position}
                     onChange={(e) => handleDirectorChange(index, 'position', e.target.value)}
                     placeholder="Position"
-                    required
+                   
+                  />
+                </div>
+                <div className="form-group">
+                  <textarea
+                    value={director.bio || ''}
+                    onChange={(e) => handleDirectorChange(index, 'bio', e.target.value)}
+                    placeholder="Director Bio"
+                    rows="2"
                   />
                 </div>
               </div>
@@ -232,33 +430,6 @@ const GenerateForms = () => {
           ))}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="shareCapital">Share Capital</label>
-          <input
-            type="number"
-            id="shareCapital"
-            name="shareCapital"
-            value={formData.shareCapital}
-            onChange={handleInputChange}
-            required
-            placeholder="Enter share capital"
-            min="0"
-            step="0.01"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="dateOfIncorporation">Date of Incorporation</label>
-          <input
-            type="date"
-            id="dateOfIncorporation"
-            name="dateOfIncorporation"
-            value={formData.dateOfIncorporation}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-
         <button type="submit" className="submit-btn" disabled={loading}>
           {loading ? 'Saving...' : 'Update Company Details'}
         </button>
@@ -273,4 +444,4 @@ const GenerateForms = () => {
   );
 };
 
-export default GenerateForms; 
+export default GenerateForms;
