@@ -31,8 +31,8 @@ const FinancialDocuments = () => {
       types: []
     },
     'invoices': {
-      name: 'Invoices',
-      icon: '🧾',
+      name: 'Other documents',
+      icon: '📄',
       types: [],
       allowMultiple: true,
       useTextInput: true
@@ -104,8 +104,8 @@ const FinancialDocuments = () => {
       ]
     },
     'other_documents': {
-      name: 'Other Documents',
-      icon: '📄',
+      name: 'Invoices',
+      icon: '🧾',
       types: [  ],
       allowMultiple: true // Special flag for Other Documents category
     }
