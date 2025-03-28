@@ -126,14 +126,24 @@ const GenerateForms = () => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
-
+  
     try {
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session) {
         throw new Error('No user session found');
       }
-
+  
+      // Fix for date field - convert empty string to null
+      const dateOfIncorporation = formData.dateOfIncorporation === '' 
+        ? null 
+        : formData.dateOfIncorporation;
+      
+      // Fix for share capital - convert empty string to null
+      const shareCapital = formData.shareCapital === '' 
+        ? null 
+        : parseFloat(formData.shareCapital);
+  
       const { data, error } = await supabase
         .from('company_details')
         .upsert(
@@ -150,8 +160,8 @@ const GenerateForms = () => {
             founder: formData.founder,
             ceo: formData.ceo,
             directors: formData.directors,
-            share_capital: parseFloat(formData.shareCapital),
-            date_of_incorporation: formData.dateOfIncorporation,
+            share_capital: shareCapital,
+            date_of_incorporation: dateOfIncorporation,
             updated_at: new Date().toISOString()
           },
           {
@@ -160,9 +170,9 @@ const GenerateForms = () => {
           }
         )
         .select();
-
+  
       if (error) throw error;
-
+  
       setMessage('Company details updated successfully!');
     } catch (error) {
       console.error('Error saving company details:', error);
